@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invisible Load — The Game</title>
+  <meta name="description" content="A household simulation game that shows you what the invisible load is, what it does to you, and how to fix it." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f6f5f2;
+      --bg3: #eeecea;
+      --text: #1a1a18;
+      --text2: #5f5e5a;
+      --text3: #9e9d99;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --green-bg: #eaf3de;
+      --green-text: #27500a;
+      --green-border: rgba(59,109,17,0.3);
+      --green-dot: #1D9E75;
+      --blue-bg: #e6f1fb;
+      --blue-text: #0c447c;
+      --blue-border: rgba(24,95,165,0.3);
+      --purple-bg: #eeedfe;
+      --purple-text: #3c3489;
+      --purple-border: rgba(83,74,183,0.3);
+      --purple-dot: #7F77DD;
+      --red-bg: #fcebeb;
+      --red-text: #791f1f;
+      --red-border: rgba(163,45,45,0.3);
+      --red-dot: #E24B4A;
+      --amber-bg: #faeeda;
+      --amber-text: #633806;
+      --amber-border: rgba(133,79,11,0.3);
+      --amber-dot: #EF9F27;
+      --warn-bg: #faeeda;
+      --warn-text: #633806;
+      --warn-border: rgba(133,79,11,0.3);
+      --danger-bg: #fcebeb;
+      --danger-text: #791f1f;
+      --danger-border: rgba(163,45,45,0.3);
+      --success-bg: #eaf3de;
+      --success-text: #27500a;
+      --success-border: rgba(59,109,17,0.3);
+      --info-bg: #e6f1fb;
+      --info-text: #0c447c;
+      --info-border: rgba(24,95,165,0.3);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg2: #2a2a28;
+        --bg3: #333330;
+        --text: #f0ede8;
+        --text2: #b4b2a9;
+        --text3: #6e6d69;
+        --border: rgba(255,255,255,0.12);
+        --border2: rgba(255,255,255,0.22);
+        --green-bg: #173404;
+        --green-text: #c0dd97;
+        --green-border: rgba(157,225,203,0.25);
+        --green-dot: #5DCAA5;
+        --blue-bg: #042c53;
+        --blue-text: #b5d4f4;
+        --blue-border: rgba(181,212,244,0.25);
+        --purple-bg: #26215c;
+        --purple-text: #cecbf6;
+        --purple-border: rgba(206,203,246,0.25);
+        --purple-dot: #AFA9EC;
+        --red-bg: #501313;
+        --red-text: #f7c1c1;
+        --red-border: rgba(247,193,193,0.25);
+        --red-dot: #F09595;
+        --amber-bg: #412402;
+        --amber-text: #fac775;
+        --amber-border: rgba(250,199,117,0.25);
+        --amber-dot: #EF9F27;
+        --warn-bg: #412402;
+        --warn-text: #fac775;
+        --warn-border: rgba(250,199,117,0.25);
+        --danger-bg: #501313;
+        --danger-text: #f7c1c1;
+        --danger-border: rgba(247,193,193,0.25);
+        --success-bg: #173404;
+        --success-text: #c0dd97;
+        --success-border: rgba(192,221,151,0.25);
+        --info-bg: #042c53;
+        --info-text: #b5d4f4;
+        --info-border: rgba(181,212,244,0.25);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 3rem;
+    }
+
+    #game-root {
+      width: 100%;
+      max-width: 720px;
+      background: var(--bg);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border);
+      padding: 1.5rem;
+      min-height: 500px;
+    }
+
+    button { font-family: inherit; cursor: pointer; }
+
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 500;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-lg);
+    }
+
+    .btn-small {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border);
+      background: var(--bg2);
+      color: var(--text2);
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 3px;
+    }
+
+    .meter-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 9px;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .card {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 11px;
+      margin-bottom: 7px;
+      background: var(--bg);
+    }
+
+    .card-text {
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 7px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: var(--radius);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .meters-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 22px;
+      margin-bottom: 12px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    .insight-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 480px;
+      background: var(--bg2);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+    }
+
+    .insight-inner {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .insight-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .insight-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .insight-title {
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 22px;
+    }
+
+    .insight-para {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text2);
+      margin-bottom: 13px;
+      text-align: left;
+    }
+
+    .flash {
+      padding: 9px 13px;
+      background: var(--bg2);
+      border-radius: var(--radius);
+      font-size: 12px;
+      color: var(--text2);
+      font-style: italic;
+      margin-top: 10px;
+    }
+
+    .banner {
+      border-radius: var(--radius);
+      padding: 9px 13px;
+      margin-bottom: 11px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0 9px;
+      border-bottom: 0.5px solid var(--border);
+      margin-bottom: 11px;
+    }
+
+    .topbar-title { font-size: 15px; font-weight: 500; }
+    .topbar-day { font-size: 12px; color: var(--text2); margin-left: 9px; }
+
+    .btn-end {
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius);
+    }
+
+    .empty-note {
+      font-size: 12px;
+      font-style: italic;
+      color: var(--text3);
+      line-height: 1.6;
+    }
+
+    .mind-count {
+      font-size: 11px;
+      color: var(--text3);
+      font-style: italic;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .intro-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 480px;
+      padding: 1rem 0;
+    }
+
+    .intro-inner {
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .intro-icon { font-size: 44px; margin-bottom: 14px; line-height: 1; }
+
+    .intro-box {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .intro-p {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+
+    .end-summary {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-top: 0.5rem;
+    }
+
+    .end-icon { font-size: 36px; margin-bottom: 10px; }
+
+    .end-stats {
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+    }
+
+    .panel-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+
+    .takeaway { margin-bottom: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+    .takeaway:first-child { border-top: none; padding-top: 0; margin-bottom: 14px; }
+    .takeaway-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    .takeaway-body { font-size: 12px; color: var(--text2); line-height: 1.7; }
+
+    .foggy { opacity: 0.88; }
+
+    footer {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.8;
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 0; }
+      #game-root { border-radius: 0; border-left: none; border-right: none; padding: 1rem; }
+      .two-col { grid-template-columns: 1fr; }
+      .meters-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="game-root"></div>
+
+<script>
+const INVISIBLE_TASKS = [
+  { id:'it1', text:'Dish soap is almost out', urgency:'low', cat:'home' },
+  { id:'it2', text:'Dentist appointment is 3 months overdue', urgency:'high', cat:'health' },
+  { id:'it3', text:'Smoke detector is beeping — probably the batteries', urgency:'medium', cat:'safety' },
+  { id:'it4', text:'Car registration expires next month', urgency:'medium', cat:'admin' },
+  { id:'it5', text:"Someone's birthday is in 8 days. Nothing is planned.", urgency:'medium', cat:'family' },
+  { id:'it6', text:'Library books are overdue', urgency:'low', cat:'admin' },
+  { id:'it7', text:'The milk expires tomorrow', urgency:'high', cat:'home' },
+  { id:'it8', text:'A prescription needs a refill this week', urgency:'high', cat:'health' },
+  { id:'it9', text:"Air filter hasn't been changed in 6 months", urgency:'medium', cat:'home' },
+  { id:'it10', text:'Permission slip sitting in the backpack — due tomorrow', urgency:'high', cat:'kids' },
+  { id:'it11', text:'Printer is almost out of ink', urgency:'low', cat:'home' },
+  { id:'it12', text:"Nobody knows where the spare keys are anymore", urgency:'low', cat:'home' },
+  { id:'it13', text:"Teen's sneakers have a hole in the sole", urgency:'medium', cat:'kids' },
+  { id:'it14', text:'The dishwasher has been making a strange noise for a week', urgency:'medium', cat:'home' },
+  { id:'it15', text:'Baby shower RSVP is due Friday', urgency:'high', cat:'social' },
+  { id:'it16', text:'The dog is overdue for flea treatment', urgency:'medium', cat:'pets' },
+  { id:'it17', text:'Freezer has frost buildup that needs clearing', urgency:'low', cat:'home' },
+  { id:'it18', text:"Teacher emailed three days ago — still no response", urgency:'high', cat:'kids' },
+  { id:'it19', text:"Family hasn't had a real meal together in 10 days", urgency:'low', cat:'family' },
+  { id:'it20', text:'Guest towels need washing before visitors arrive Sunday', urgency:'medium', cat:'home' },
+  { id:'it21', text:'Check engine light came on — three days ago', urgency:'high', cat:'admin' },
+  { id:'it22', text:'Need to call insurance about the claim', urgency:'high', cat:'admin' },
+  { id:'it23', text:'Vitamins are running low', urgency:'low', cat:'health' },
+  { id:'it24', text:'Someone needs a haircut — overdue by three weeks', urgency:'low', cat:'family' },
+  { id:'it25', text:'The bath mat is molding at the corners', urgency:'low', cat:'home' },
+];
+
+const VISIBLE_TASKS = [
+  { id:'vt1', text:'Buy groceries' },
+  { id:'vt2', text:'Take out the trash' },
+  { id:'vt3', text:'Do the laundry' },
+  { id:'vt4', text:'Vacuum the living room' },
+  { id:'vt5', text:'Pay the electric bill' },
+  { id:'vt6', text:'Cook dinner tonight' },
+  { id:'vt7', text:'Clean the bathrooms' },
+  { id:'vt8', text:'Pick up dry cleaning' },
+];
+
+const WHACKS = {
+  1: {
+    num:1,
+    title:"They weren't ignoring it.",
+    body:[
+      'A household member glances at the shared board and says: "Looks like a pretty manageable week."',
+      'You are currently tracking {{mindCount}} things that are not on that board.',
+      'They are not lazy. They are not selfish. They did not forget you exist.',
+      'They literally cannot see what you can see.',
+      'The invisible load is invisible by definition — and that is the entire problem.'
+    ],
+    cta:'I see it now. Keep playing →'
+  },
+  2: {
+    num:2,
+    title:'This is not laziness.',
+    body:[
+      'Notice your options right now. Some are harder to find than they were on Day 1.',
+      'When cognitive load is this high, your brain has less available working memory. Decisions feel heavier. Things that were easy to handle last week now feel overwhelming. You start reacting instead of responding.',
+      'From the outside, this looks like not caring. Like dropping the ball. Like being disorganized.',
+      'It is none of those things.',
+      'It is what happens to any human brain asked to silently track too much for too long. This is not a character flaw. It is a capacity problem — and it is caused entirely by carrying weight that was never meant to be invisible.'
+    ],
+    cta:'I feel this. Continue →'
+  },
+  3: {
+    num:3,
+    title:"You didn't work harder.",
+    body:[
+      'Look at your household health meters.',
+      'You externalized tasks. You moved invisible things onto the shared board where others could see them and act on them.',
+      'You did not do more work. You did not try harder. You changed the structure of information.',
+      'When the load is visible, it can be shared. When it is shared, the household functions better — and so do you.',
+      'The fix is not effort. The fix is visibility. Build systems that make the invisible work visible to everyone — and watch what changes.'
+    ],
+    cta:'This changes things. Finish the week →'
+  }
+};
+
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+let G = {};
+
+function initGame(){
+  const si = shuffle(INVISIBLE_TASKS);
+  const sv = shuffle(VISIBLE_TASKS);
+  G = {
+    screen:'intro', day:1, maxDays:5,
+    sharedBoard: sv.slice(0,2),
+    playerMind: si.slice(0,3),
+    completed: [],
+    externalizedCount: 0,
+    pendingInvis: si.slice(3),
+    pendingVis: sv.slice(2),
+    meters:{ cog:20, well:85, house:88, tension:22 },
+    whackSeen:{ 1:false, 2:false, 3:false },
+    currentWhack:null,
+    flash:''
+  };
+}
+
+function calcMeters(){
+  const n = G.playerMind.length;
+  const e = G.externalizedCount;
+  G.meters.cog  = Math.min(100, Math.round((n/14)*100));
+  G.meters.well = Math.max(10,  Math.round(100 - G.meters.cog*0.75));
+  G.meters.tension = Math.min(95, Math.max(5, 10 + n*5 - e*3));
+  G.meters.house = Math.min(100, Math.max(20, Math.round(100 - n*3.5 + e*2.5)));
+}
+
+function triggerWhack(id){ G.currentWhack=id; G.whackSeen[id]=true; G.screen='whack'; render(); return true; }
+
+function checkWhacks(){
+  if(G.screen!=='playing') return false;
+  if(G.day===3 && !G.whackSeen[1]) return triggerWhack(1);
+  if(G.day===4 && !G.whackSeen[2] && G.whackSeen[1]) return triggerWhack(2);
+  if(G.externalizedCount>=4 && !G.whackSeen[3] && G.whackSeen[2]) return triggerWhack(3);
+  return false;
+}
+
+function startGame(){ initGame(); G.screen='playing'; render(); }
+
+function nextDay(){
+  if(G.day>=G.maxDays){ G.screen='end'; render(); return; }
+  G.day++;
+  const ni = 2+(Math.random()>0.45?1:0);
+  G.playerMind.push(...G.pendingInvis.splice(0, Math.min(ni, G.pendingInvis.length)));
+  G.sharedBoard.push(...G.pendingVis.splice(0,1));
+  calcMeters(); G.flash='';
+  if(!checkWhacks()) render();
+}
+
+function externalizeTask(id){
+  const i=G.playerMind.findIndex(t=>t.id===id); if(i===-1) return;
+  const t=G.playerMind.splice(i,1)[0];
+  G.sharedBoard.push({...t, externalized:true});
+  G.externalizedCount++;
+  calcMeters();
+  const e=G.externalizedCount;
+  if(e===1) G.flash='This task is now on the shared board. Your household can see it — and act on it.';
+  else if(e===3) G.flash='Three invisible tasks made visible. Watch what happens to the meters.';
+  else if(e===5) G.flash='Five tasks out of your head and into shared view.';
+  else G.flash='';
+  if(!checkWhacks()) render();
+}
+
+function completeTask(id, fromMind){
+  const arr=fromMind?G.playerMind:G.sharedBoard;
+  const i=arr.findIndex(t=>t.id===id); if(i===-1) return;
+  G.completed.push(arr.splice(i,1)[0]);
+  calcMeters(); render();
+}
+
+function dismissWhack(){ G.screen='playing'; G.currentWhack=null; render(); }
+
+function meterFillColor(val, inverse){
+  const v=Math.min(100,Math.max(0,val));
+  if(inverse) return v>65?'#E24B4A':v>40?'#EF9F27':'#1D9E75';
+  return v>60?'#1D9E75':v>30?'#EF9F27':'#E24B4A';
+}
+
+function meterHTML(label, val, inverse){
+  const v=Math.min(100,Math.max(0,Math.round(val)));
+  return `<div class="meter-label"><span>${label}</span><span>${v}%</span></div>
+    <div class="meter-track"><div class="meter-fill" style="width:${v}%;background:${meterFillColor(v,inverse)};"></div></div>`;
+}
+
+function cardShared(t){
+  return `<div class="card">
+    <div class="card-text">${t.text}${t.externalized?`<span class="badge" style="margin-left:6px;background:var(--info-bg);color:var(--info-text);">shared</span>`:''}
+    </div>
+    <button class="btn-small" style="background:var(--success-bg);color:var(--success-text);border-color:var(--success-border);" onclick="completeTask('${t.id}',false)">Done</button>
+  </div>`;
+}
+
+function cardMind(t, idx, degraded){
+  const hide = degraded && idx%3===0;
+  const bg = t.urgency==='high'?'var(--danger-bg)':t.urgency==='medium'?'var(--warn-bg)':'var(--bg2)';
+  const bc = t.urgency==='high'?'var(--danger-border)':t.urgency==='medium'?'var(--warn-border)':'var(--border)';
+  const tc = t.urgency==='high'?'var(--danger-text)':t.urgency==='medium'?'var(--warn-text)':'var(--text2)';
+  const dc = t.urgency==='high'?'#E24B4A':t.urgency==='medium'?'#EF9F27':'#888780';
+  return `<div class="card" style="background:${bg};border-color:${bc};">
+    <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:7px;">
+      <div class="dot" style="background:${dc};margin-top:4px;"></div>
+      <div class="card-text" style="color:${tc};margin-bottom:0;">${t.text}</div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      ${!hide?`<button class="btn-small" style="background:var(--info-bg);color:var(--info-text);border-color:var(--info-border);" onclick="externalizeTask('${t.id}')">Make visible</button>`:''}
+      <button class="btn-small" onclick="completeTask('${t.id}',true)">Handle alone</button>
+    </div>
+  </div>`;
+}
+
+function renderIntro(){
+  document.getElementById('game-root').innerHTML = `
+    <div class="intro-center">
+      <div class="intro-inner">
+        <div class="intro-icon">🧠</div>
+        <h1 style="font-size:26px;font-weight:500;margin-bottom:6px;">Invisible Load</h1>
+        <p style="font-size:15px;color:var(--text2);margin-bottom:24px;">A household simulation with something to say.</p>
+        <div class="intro-box">
+          <p class="intro-p">You are managing a household for <strong>5 days</strong>. Some tasks appear on the <strong>Shared Board</strong> — visible to everyone in your household.</p>
+          <p class="intro-p">Other things surface only in <strong>Your Mind</strong>. Nobody else can see these.</p>
+          <p class="intro-p" style="margin-bottom:0;color:var(--text2);">Pay close attention to what happens over the course of the week.</p>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Begin Day 1</button>
+      </div>
+    </div>`;
+}
+
+function renderPlaying(){
+  const degraded = G.meters.cog > 62;
+  const foggy    = G.meters.well <= 38;
+  const isLast   = G.day >= G.maxDays;
+  const mc       = G.playerMind.length;
+
+  let banner = '';
+  if(foggy)     banner = `<div class="banner" style="background:var(--danger-bg);border:0.5px solid var(--danger-border);color:var(--danger-text);">Cognitive load is critically high. You may be missing options that were available earlier. This is not a coincidence.</div>`;
+  else if(degraded) banner = `<div class="banner" style="background:var(--warn-bg);border:0.5px solid var(--warn-border);color:var(--warn-text);">Your mental stack is getting full. Some decisions are starting to feel harder to make.</div>`;
+
+  const sharedHtml = G.sharedBoard.length===0
+    ? `<p class="empty-note">Nothing here yet. Nothing is visible to your household.</p>`
+    : G.sharedBoard.map(cardShared).join('');
+
+  const mindHtml = G.playerMind.length===0
+    ? `<p class="empty-note">Nothing in your mental stack right now.</p>`
+    : G.playerMind.map((t,i)=>cardMind(t,i,degraded)).join('');
+
+  const flashHtml = G.flash ? `<div class="flash">${G.flash}</div>` : '';
+
+  document.getElementById('game-root').innerHTML = `
+    <div class="${foggy?'foggy':''}">
+      <div class="topbar">
+        <div><span class="topbar-title">Invisible Load</span><span class="topbar-day">Day ${G.day} of ${G.maxDays}</span></div>
+        <button class="btn-end" onclick="nextDay()">${isLast?'End week':'End day →'}</button>
+      </div>
+      <div class="meters-grid">
+        ${meterHTML('Cognitive load',     G.meters.cog,     true)}
+        ${meterHTML('Player wellbeing',   G.meters.well,    false)}
+        ${meterHTML('Household function', G.meters.house,   false)}
+        ${meterHTML('Relationship tension',G.meters.tension, true)}
+      </div>
+      ${banner}
+      <div class="two-col">
+        <div>
+          <div class="section-head">
+            <div class="dot" style="background:var(--green-dot);"></div>
+            <span style="font-size:13px;font-weight:500;">Shared board</span>
+            <span class="badge" style="background:var(--green-bg);color:var(--green-text);">everyone sees this</span>
+          </div>
+          ${sharedHtml}
+        </div>
+        <div>
+          <div class="section-head">
+            <div class="dot" style="background:var(--purple-dot);"></div>
+            <span style="font-size:13px;font-weight:500;">Your mind</span>
+            <span class="badge" style="background:var(--purple-bg);color:var(--purple-text);">only you see this</span>
+          </div>
+          ${mindHtml}
+          ${mc>0?`<p class="mind-count">${mc} thing${mc!==1?'s':''} you are tracking alone. Nobody else knows these exist.</p>`:''}
+        </div>
+      </div>
+      ${flashHtml}
+    </div>`;
+}
+
+function renderWhack(){
+  const w   = WHACKS[G.currentWhack];
+  const mc  = G.playerMind.length;
+  const paras = w.body.map(p=>p.replace('{{mindCount}}', mc));
+  const dots  = [1,2,3].map(i=>`<div class="insight-dot" style="background:${i===w.num?'var(--text)':'var(--border2)'}"></div>`).join('');
+
+  document.getElementById('game-root').innerHTML = `
+    <div class="insight-screen">
+      <div class="insight-inner">
+        <div class="insight-dots">${dots}</div>
+        <h2 class="insight-title">${w.title}</h2>
+        <div style="margin-bottom:28px;">${paras.map(p=>`<p class="insight-para">${p}</p>`).join('')}</div>
+        <button class="btn-primary" onclick="dismissWhack()">${w.cta}</button>
+      </div>
+    </div>`;
+}
+
+function renderEnd(){
+  const e  = G.externalizedCount;
+  const c  = G.completed.length;
+  const ws = Object.values(G.whackSeen).filter(Boolean).length;
+
+  const takeaways = [
+    { t:'Make the invisible visible.', b:'The highest-leverage change in any household: get invisible tasks onto a shared system everyone uses. A whiteboard, an app, a weekly check-in — the format matters far less than shared visibility.' },
+    { t:'You cannot delegate what nobody can see.', b:"When household members don't pick things up, it's usually not laziness. The task is invisible to them. Moving invisible work onto a shared board makes delegation possible and natural." },
+    { t:'A full cognitive load looks, from the outside, like not caring.', b:"Overwhelm, short temper, dropping things — these are the visible symptoms of invisible overload. The person struggling isn't failing. They're over capacity." },
+    { t:'The fix is structural, not personal.', b:"Asking someone to 'help more' doesn't work long-term. Building shared visibility systems does. The goal is not more effort from the overloaded person. It's redistributing information." },
+  ];
+
+  const takeawayHtml = takeaways.map((t,i)=>`
+    <div class="takeaway" ${i===0?'style="border-top:none;padding-top:0;"':''}>
+      <p class="takeaway-title">${t.t}</p>
+      <p class="takeaway-body">${t.b}</p>
+    </div>`).join('');
+
+  document.getElementById('game-root').innerHTML = `
+    <div>
+      <div class="end-summary">
+        <div class="end-icon">✦</div>
+        <h1 style="font-size:22px;font-weight:500;margin-bottom:6px;">Week complete.</h1>
+        <p class="end-stats">${e} invisible task${e!==1?'s':''} made visible &nbsp;·&nbsp; ${c} task${c!==1?'s':''} completed &nbsp;·&nbsp; ${ws} of 3 insights reached</p>
+      </div>
+      <div class="panel">
+        <p class="panel-label">Final household health</p>
+        <div class="meters-grid">
+          ${meterHTML('Player wellbeing',    G.meters.well,    false)}
+          ${meterHTML('Household function',  G.meters.house,   false)}
+          ${meterHTML('Cognitive load',      G.meters.cog,     true)}
+          ${meterHTML('Relationship tension',G.meters.tension, true)}
+        </div>
+      </div>
+      <div class="panel" style="background:var(--bg);">
+        <p class="panel-label">What this game was really saying</p>
+        ${takeawayHtml}
+      </div>
+      ${ws<3?`<div class="banner" style="background:var(--warn-bg);border:0.5px solid var(--warn-border);color:var(--warn-text);margin-bottom:14px;">You only reached ${ws} of 3 insight moments. Try again and externalize more tasks — all three are worth reading.</div>`:''}
+      <button class="btn-primary" onclick="startGame()">Play again</button>
+      <footer>
+        <p>Invisible Load — a game about cognitive labor and household systems.</p>
+        <p>Share it with someone who needs to see this.</p>
+      </footer>
+    </div>`;
+}
+
+function render(){
+  if(G.screen==='intro')   renderIntro();
+  else if(G.screen==='playing') renderPlaying();
+  else if(G.screen==='whack')   renderWhack();
+  else if(G.screen==='end')     renderEnd();
+}
+
+initGame();
+render();
+</script>
+</body>
+</html>
